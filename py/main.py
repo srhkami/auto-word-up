@@ -1,135 +1,137 @@
 import json
 import sys
 import threading
-
 import uvicorn
 import webview
 import os.path
-
-from fastapi import FastAPI
-
-from web.response import Response
+from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from utils.log import log
-from web.models import Login, Profile, CreateCard, QueryGemini, WordContent
+from web.models import Login, Profile, CreateCard, QueryGemini, CardContent
 from web.gemini import word_agent
-from pydantic import ValidationError
 import requests
 
 DEBUG_MODE = False
-
 APP_NAME = '預設程式'
+
+app = FastAPI()
 
 USER_PROFILE: Profile | None = None
 
 
-def get_root_path():
-    # 如果是打包後的 exe
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    # 如果是開發環境的 .py
-    else:
-        return os.path.dirname(os.path.abspath(__file__))
+# 1. 獲取 dist 文件夾的絕對路徑
+def get_resource_path(relative_path):
+    """ 獲取資源絕對路徑，適應開發環境與 PyInstaller 打包環境 """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 
+DIST_PATH = get_resource_path("dist")
 # 瀏覽器緩存路徑 (如果你還是想讓 localStorage 生效)
-CACHE_DIR = os.path.join(get_root_path(), "web_cache")
+CACHE_PATH = get_resource_path("web_cache")
 
-# --- 2. 建立 FastAPI 應用 ---
-app = FastAPI()
+# 2. 掛載靜態資源 (CSS, JS, Images)
+# 注意：必須放在 API 路由之後，否則可能攔截 API 請求
+if os.path.exists(DIST_PATH):
+    app.mount("/assets", StaticFiles(directory=os.path.join(DIST_PATH, "assets")), name="assets")
 
 
+# 3. 核心：處理 React 路由 (SPA)
+# 無論用戶訪問什麼路徑，只要不是 API，都返回 index.html
+@app.get("/{catchall:path}")
+async def serve_react_app(catchall: str):
+    index_file = os.path.join(DIST_PATH, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return {"error": "React build files not found. Did you run 'npm run build'?"}
 
 
-def login(self, req):
-    """
-    登入
-    :param req:
-    :return:
-    """
-    try:
-        data = Login.model_validate(req)
-        response = requests.post(
-            url='https://api.wordup.com.tw/api/v1/auth/sign_in',
-            data=data.model_dump()
-        )
-        if response.status_code != 200:
-            return Response(status=500, message='帳密錯誤')
-        USER_PROFILE = Profile(
-            token=response.json().get('token'),
-            client=response.headers.get('client'),
-            uid=response.headers.get('uid'),
-        )
-        return Response(status=200).model_dump()
+# 4. FastAPI 接口
 
-    except ValidationError as e:
-        return Response(status=500, message=str(e)).model_dump()
+@app.post('/login')
+async def login(data: Login) -> Profile:
+    response = requests.post(
+        url='https://api.wordup.com.tw/api/v1/auth/sign_in',
+        data=data.model_dump()
+    )
+    if response.status_code != 200:
+        raise HTTPException(response.status_code, '登入帳號錯誤')
 
-def create_card(self, req):
-    try:
-        data = CreateCard.model_validate(req)
-        response = requests.post(
-            url='https://api.wordup.com.tw/api/v1/cards',
-            data={
-                "deck_id": data.deck_id,
-                "force_create": data.force_create,
-                "word": data.word,
-                "text_content":
-                    {
-                        "explanations":
-                            [
-                                {
-                                    "translations": [data.translations],
-                                    "sentences": [data.sentences],
-                                    "word_types": [],
-                                    "notes": ["[card.note.tag]"],
-                                    "images": [],
-                                    "synonyms": []
-                                }
-                            ]
-                    },
+    user_profile = Profile(
+        token=response.json().get('token'),
+        client=response.headers.get('client'),
+        uid=response.headers.get('uid'),
+    )
+    return user_profile
 
-            }
-        )
-        if response.status_code == 422:
-            return Response(status=422, message='已有重複卡片').model_dump()
-        if response.status_code == 200:
-            return Response(status=201, message='創建卡片成功').model_dump()
-        return Response(status=response.status_code, message='創建卡片失敗').model_dump()
-    except ValidationError as e:
-        return Response(status=500, message=str(e)).model_dump()
 
-def query_gemini(self, req):
-    try:
-        data = QueryGemini.model_validate(req)
-        while True:
-            text = word_agent(data.word)
-            try:
-                json.loads(text)
-                break
-            except ValueError as e:
-                print(e)
+@app.post('/create_card')
+async def create_card(data: CreateCard) -> str:
+    response = requests.post(
+        url='https://api.wordup.com.tw/api/v1/cards',
+        data={
+            "deck_id": data.deck_id,
+            "force_create": data.force_create,
+            "word": data.word,
+            "text_content":
+                {
+                    "explanations":
+                        [
+                            {
+                                "translations": [data.translations],
+                                "sentences": [data.sentences],
+                                "word_types": [],
+                                "notes": ["[card.note.tag]"],
+                                "images": [],
+                                "synonyms": []
+                            }
+                        ]
+                },
 
-        # todo: 調用Gemini API得到名詞解析
-        word = WordContent(word='name', translations='姓名', sentences='Please write your name on this line.')
-        return Response[WordContent](status=200, data=word).model_dump()
-    except ValidationError as e:
-        return Response(status=500, message=str(e)).model_dump()
+        }
+    )
+    if response.status_code == 422:
+        raise HTTPException(422, '已有重複卡片')
+    if response.status_code == 200:
+        return '創建卡片成功'
+    raise HTTPException(500, '創建卡片失敗')
+
+
+@app.post('/query_gemini')
+async def query_gemini(data: QueryGemini) -> CardContent:
+    while True:
+        text = await word_agent(data.word)
+        try:
+            res = json.loads(text)
+            break
+        except ValueError as e:
+            print(e)
+
+    return CardContent(
+        word=res.get('word'),
+        translations=res.get('translations'),
+        description=res.get('description'),
+        sentences=res.get('sentences'),
+    )
+
 
 # --- 3. 啟動 FastAPI 的函數 (用於線程) ---
 def run_server():
     # 使用 uvicorn 啟動，建議固定端口
     uvicorn.run(app, host="127.0.0.1", port=12345, log_level="info")
 
+
 if __name__ == '__main__':
     # 在子線程中啟動 FastAPI，避免阻塞主 UI 線程
-    server_thread = threading.Thread(target=run_server, daemon=True)
-    server_thread.start()
+    threading.Thread(target=run_server, daemon=True).start()
 
     if DEBUG_MODE:
         log().error('注意！！DEBUG模式已開啟！！')
     log().info('請耐心等待程式開啟......')
     # api = Api()
-    url = os.path.join(os.getcwd(), './html/index.html') if not DEBUG_MODE else 'http://localhost:5173'
+    url = "http://127.0.0.1:12345" if not DEBUG_MODE else 'http://localhost:5173'
     window = webview.create_window(
         title=APP_NAME,
         url=url,
@@ -140,6 +142,6 @@ if __name__ == '__main__':
     log().debug('程式開啟成功')
     webview.start(
         debug=DEBUG_MODE,
-        storage_path=CACHE_DIR,
+        storage_path=CACHE_PATH,
         private_mode=False,
     )
