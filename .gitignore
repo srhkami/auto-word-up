@@ -15,8 +15,8 @@ dist-ssr
 .venv
 build
 
-py/dist
-py/build
+core/dist
+core/build
 
 
 # Editor directories and files
@@ -29,4 +29,5 @@ py/build
 *.njsproj
 *.sln
 *.sw?
-/.env
+/core/.env
+/core/.env

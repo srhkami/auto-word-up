@@ -1,10 +1,5 @@
-import json
-import os
-from google import genai
-from google.genai import types
+from google.genai import types, Client
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GENAI_CLIENT = genai.Client(api_key=GEMINI_API_KEY)
 LLM_MODEL = 'gemini-2.5-flash'
 
 SYSTEM_PROMPT = """
@@ -31,7 +26,7 @@ SYSTEM_PROMPT = """
 """
 
 
-async def word_agent(word: str) -> str:
+async def word_agent(word: str, client: Client) -> str:
     genai_config = types.GenerateContentConfig(
         temperature=0.1,  # 法律問題需要極高的穩定性，設為 0.0 或 0.1
         max_output_tokens=8192,
@@ -39,7 +34,7 @@ async def word_agent(word: str) -> str:
     )
 
     # 4.2 呼叫Gemini生成最後答案
-    response = await GENAI_CLIENT.aio.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=LLM_MODEL,
         contents=f'# 使用者輸入的詞彙：**{word}**',
         config=genai_config,

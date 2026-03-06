@@ -1,6 +1,6 @@
 import './App.css'
 import {Toaster} from "react-hot-toast";
-import {Nav} from "@/layout";
+import {Nav} from "@/features";
 import {Intro, ModalNewVersion} from "@/features";
 
 function App() {

@@ -19,10 +19,18 @@ class CardContent(BaseModel):
     sentences: str  # 例句
 
 
-class CreateCard(CardContent):
+class CreateCards(BaseModel):
     deck_id: str  # 卡片堆 ID
     force_create: bool  # 強制創建模式
+    cards: list[CardContent]
+
+
+class CreateCardsResponse(BaseModel):
+    deck_id: str
+    success_words: list[str] = []
+    failed_words: list[str] = []
 
 
 class QueryGemini(BaseModel):
     word: str
+    api_key: str
