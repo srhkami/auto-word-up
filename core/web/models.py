@@ -12,7 +12,7 @@ class Profile(BaseModel):
     client: str
 
 
-class CardContent(BaseModel):
+class WordResult(BaseModel):
     word: str
     translations: str  # 譯本
     description: str  # 描述
@@ -22,7 +22,7 @@ class CardContent(BaseModel):
 class CreateCards(BaseModel):
     deck_id: str  # 卡片堆 ID
     force_create: bool  # 強制創建模式
-    cards: list[CardContent]
+    cards: list[WordResult]
 
 
 class CreateCardsResponse(BaseModel):
@@ -32,5 +32,6 @@ class CreateCardsResponse(BaseModel):
 
 
 class QueryGemini(BaseModel):
-    word: str
     api_key: str
+    word_content: str
+

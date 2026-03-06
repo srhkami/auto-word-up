@@ -2,7 +2,10 @@ import {BsFillPersonLinesFill} from "react-icons/bs";
 import {MdNumbers} from "react-icons/md";
 import {AppVersionText} from "@/utils/log.ts";
 import ModalFeedback from "./ModalFeedback.tsx";
-import {Button, Col, Row} from "@/component";
+import {Button, Col, Collapse, CollapseContent, CollapseTitle, Row} from "@/component";
+import Step1Login from "@/features/Intro/Step1Login.tsx";
+import Step2ApiKey from "@/features/Intro/Step2ApiKey.tsx";
+import Step3Query from "@/features/Intro/Step3Query.tsx";
 
 export default function Intro() {
   return (
@@ -10,7 +13,26 @@ export default function Intro() {
       <div className="card bg-neutral text-neutral-content w-96 my-10">
         <div className='card-body'>
           <Row>
-            空
+            <Collapse inputName='main' defaultChecked icon='arrow'>
+              <CollapseTitle>1. 登入</CollapseTitle>
+              <CollapseContent>
+                <Step1Login/>
+              </CollapseContent>
+            </Collapse>
+            <Collapse inputName='main' icon='arrow' className='mt-2'>
+              <CollapseTitle>2. API KEY</CollapseTitle>
+              <CollapseContent>
+                <Step2ApiKey/>
+              </CollapseContent>
+            </Collapse>
+            <Collapse inputName='main' icon='arrow' className='mt-2'>
+              <CollapseTitle>3. 詞彙解析</CollapseTitle>
+              <CollapseContent>
+                <Step3Query/>
+              </CollapseContent>
+            </Collapse>
+
+
           </Row>
           <div className='divider my-1 text-xs'>關於此軟體</div>
           <div className='grid grid-cols-5 gap-2 font-bold text-gray-300'>

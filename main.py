@@ -8,12 +8,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from core.utils.log import log
-from core.web.models import Login, Profile, CreateCards, CreateCardsResponse, QueryGemini, CardContent
+from core.web.models import Login, Profile, CreateCards, CreateCardsResponse, QueryGemini, WordResult
 from core.web.gemini import word_agent
 from google import genai
 import httpx
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 APP_NAME = '預設程式'
 
 app = FastAPI()
@@ -51,8 +51,8 @@ async def serve_react_app(catchall: str):
 
 # 4. FastAPI 接口
 
-@app.post('/login')
-async def login(data: Login) -> Profile:
+@app.post('/api/login')
+async def login(data: Login) -> str:
     async with httpx.AsyncClient() as client:
         response = await client.post(
             url='https://api.wordup.com.tw/api/v1/auth/sign_in',
@@ -60,22 +60,32 @@ async def login(data: Login) -> Profile:
         )
         if response.status_code != 200:
             raise HTTPException(response.status_code, '登入帳號錯誤')
-        user_profile = Profile(
-            token=response.headers.get('token'),
+
+        USER_PROFILE = Profile(
+            token=response.headers.get('access-token'),
             client=response.headers.get('client'),
             uid=response.headers.get('uid'),
         )
-        return user_profile
+        return USER_PROFILE.uid
 
 
-@app.post('/create_cards')
+@app.post('/api/create_cards')
 async def create_cards(data: CreateCards) -> CreateCardsResponse:
     async with httpx.AsyncClient() as client:
+        if not USER_PROFILE:
+            raise HTTPException(500, '尚未取得權限')
         success_words: list[str] = []
         failed_words: list[str] = []
         for card in data.cards:
             response = await client.post(
                 url='https://api.wordup.com.tw/api/v1/cards',
+                headers={
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json, text/plain, */*',
+                    'access-token': USER_PROFILE.token,
+                    'client': USER_PROFILE.client,
+                    'uid': USER_PROFILE.uid,
+                },
                 data={
                     "deck_id": data.deck_id,
                     "force_create": data.force_create,
@@ -109,18 +119,29 @@ async def create_cards(data: CreateCards) -> CreateCardsResponse:
         )
 
 
-@app.post('/query_gemini')
-async def query_gemini(data: QueryGemini) -> CardContent:
+@app.post('/api/query_gemini')
+async def query_gemini(data: QueryGemini) -> WordResult:
+    words = data.word_content.split('/n')
     gemini_client = genai.Client(api_key=data.api_key)
-    while True:
-        text = await word_agent(data.word, gemini_client)
+    results: list[WordResult] = []
+    for word in words:
+
+        text = await word_agent(word, gemini_client)
         try:
             res = json.loads(text)
-            break
+            results.append(
+                WordResult(
+                    word=res.get('word'),
+                    translations=res.get('translations'),
+                    description=res.get('description'),
+                    sentences=res.get('sentences'),
+                )
+            )
+            continue
         except ValueError as e:
             print(e)
 
-    return CardContent(
+    return WordResult(
         word=res.get('word'),
         translations=res.get('translations'),
         description=res.get('description'),

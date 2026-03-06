@@ -15,6 +15,13 @@ export default defineConfig({
       usePolling: true,   // 開啟輪詢
       interval: 100,      // 每 100ms 檢查一次
     },
+    proxy: {
+      // 將所有 /api 開頭的請求代理到 FastAPI
+      '/api': {
+        target: 'http://127.0.0.1:12345',
+        changeOrigin: true,
+      }
+    }
   },
   resolve: {
     alias: {

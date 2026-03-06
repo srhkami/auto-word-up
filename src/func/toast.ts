@@ -1,7 +1,7 @@
-import toast, {Renderable, ValueOrFunction} from "react-hot-toast";
+import toast, {type Renderable, type ValueOrFunction} from "react-hot-toast";
 
 type TOption = {
-  baseText?: string,
+  label?: string,
   loading?: string,
   success?: string,
   error?: ValueOrFunction<Renderable, any>,
@@ -11,12 +11,12 @@ type TOption = {
 *  可傳入簡易預設文字，或自訂每個值
 *  若無傳入其他狀態文字，則預設生成預計的載入中與錯誤提示，而成功不顯示
 * */
-export async function showToast<T>(
+export default async function showToast<T>(
   func: Promise<T> | (() => Promise<T>),
   option?: TOption | null,
 ) {
 
-  const baseText = option?.baseText ?? '處理';
+  const baseText = option?.label ?? '處理';
   const loadingText = option?.loading ?? baseText + '中...';
   const successText = option?.success ?? null;
   const errorText = option?.error ?? baseText + '失敗，請重試';
