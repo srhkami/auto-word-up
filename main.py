@@ -18,8 +18,6 @@ APP_NAME = '預設程式'
 
 app = FastAPI()
 
-USER_PROFILE: Profile | None = None
-
 
 # 1. 獲取 dist 文件夾的絕對路徑
 def get_resource_path(relative_path):
@@ -52,7 +50,7 @@ async def serve_react_app(catchall: str):
 # 4. FastAPI 接口
 
 @app.post('/api/login')
-async def login(data: Login) -> str:
+async def login(data: Login) -> Profile:
     async with httpx.AsyncClient() as client:
         response = await client.post(
             url='https://api.wordup.com.tw/api/v1/auth/sign_in',
@@ -61,32 +59,54 @@ async def login(data: Login) -> str:
         if response.status_code != 200:
             raise HTTPException(response.status_code, '登入帳號錯誤')
 
-        USER_PROFILE = Profile(
+        return Profile(
             token=response.headers.get('access-token'),
             client=response.headers.get('client'),
             uid=response.headers.get('uid'),
         )
-        return USER_PROFILE.uid
+
+
+@app.post('/api/query_gemini')
+async def query_gemini(data: QueryGemini) -> list[WordResult]:
+    # words = data.word_content.split('/n')
+    gemini_client = genai.Client(api_key=data.api_key)
+
+    json_text = await word_agent(data.word_content, gemini_client)
+    words = json.loads(json_text)
+    results: list[WordResult] = []
+    for i in words:
+        results.append(WordResult(
+            word=i.get('word'),
+            translations=i.get('translations'),
+            description=i.get('description'),
+            sentences=i.get('sentences'),
+        ))
+    return results
 
 
 @app.post('/api/create_cards')
 async def create_cards(data: CreateCards) -> CreateCardsResponse:
     async with httpx.AsyncClient() as client:
-        if not USER_PROFILE:
-            raise HTTPException(500, '尚未取得權限')
         success_words: list[str] = []
         failed_words: list[str] = []
         for card in data.cards:
             response = await client.post(
                 url='https://api.wordup.com.tw/api/v1/cards',
                 headers={
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json, text/plain, */*',
-                    'access-token': USER_PROFILE.token,
-                    'client': USER_PROFILE.client,
-                    'uid': USER_PROFILE.uid,
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0",
+                    "Accept": "application/json, text/plain, */*",
+                    "Content-Type": "application/json",
+                    # 關鍵身分與自定義標頭
+                    "Client-Info": "web3/3.97.0",
+                    "Client-Lang": "zh-TW",
+                    'access-token': data.profile.token,
+                    'client': data.profile.client,
+                    'uid': data.profile.uid,
+                    # 防盜連
+                    "Origin": "https://app.wordup.com.tw",
+                    "Referer": "https://app.wordup.com.tw/",
                 },
-                data={
+                json={
                     "deck_id": data.deck_id,
                     "force_create": data.force_create,
                     "word": card.word,
@@ -95,18 +115,21 @@ async def create_cards(data: CreateCards) -> CreateCardsResponse:
                             "explanations":
                                 [
                                     {
-                                        "translations": [card.translations, card.description],
-                                        "sentences": [card.sentences],
-                                        "word_types": [],
-                                        "notes": ["[card.note.tag]"],
                                         "images": [],
-                                        "synonyms": []
+                                        "notes": ["[card.note.tag]"],
+                                        "sentences": [card.sentences],
+                                        "synonyms": [],
+                                        "translations": [card.translations, card.description],
+                                        "word_types": [],
                                     }
                                 ]
                         },
 
                 }
             )
+            log().info(f'【{card.word}】')
+            log().info('返回狀態：' + str(response.status_code))
+            log().info('返回內容：' + response.text)
             if response.status_code == 200:
                 success_words.append(card.word)
             else:
@@ -117,36 +140,6 @@ async def create_cards(data: CreateCards) -> CreateCardsResponse:
             success_words=success_words,
             failed_words=failed_words,
         )
-
-
-@app.post('/api/query_gemini')
-async def query_gemini(data: QueryGemini) -> WordResult:
-    words = data.word_content.split('/n')
-    gemini_client = genai.Client(api_key=data.api_key)
-    results: list[WordResult] = []
-    for word in words:
-
-        text = await word_agent(word, gemini_client)
-        try:
-            res = json.loads(text)
-            results.append(
-                WordResult(
-                    word=res.get('word'),
-                    translations=res.get('translations'),
-                    description=res.get('description'),
-                    sentences=res.get('sentences'),
-                )
-            )
-            continue
-        except ValueError as e:
-            print(e)
-
-    return WordResult(
-        word=res.get('word'),
-        translations=res.get('translations'),
-        description=res.get('description'),
-        sentences=res.get('sentences'),
-    )
 
 
 # --- 3. 啟動 FastAPI 的函數 (用於線程) ---

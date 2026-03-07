@@ -20,6 +20,7 @@ class WordResult(BaseModel):
 
 
 class CreateCards(BaseModel):
+    profile: Profile
     deck_id: str  # 卡片堆 ID
     force_create: bool  # 強制創建模式
     cards: list[WordResult]
@@ -34,4 +35,3 @@ class CreateCardsResponse(BaseModel):
 class QueryGemini(BaseModel):
     api_key: str
     word_content: str
-

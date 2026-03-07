@@ -1,7 +1,7 @@
 import BtnThemeToggle from "./BtnThemeToggle.tsx";
 import {Dropdown, DropdownToggle, DropdownContent} from "@/component";
 import {HiMenuAlt2} from "react-icons/hi";
-import {ModalChangelog, ModalReadme} from "@/features";
+import {ModalChangelog} from "@/features";
 
 export default function Nav() {
   return (
@@ -13,9 +13,6 @@ export default function Nav() {
           </DropdownToggle>
           <DropdownContent>
             <ul className="menu">
-              <li>
-                <ModalReadme/>
-              </li>
               <li>
                 <ModalChangelog/>
               </li>

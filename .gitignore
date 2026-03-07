@@ -31,3 +31,4 @@ core/build
 *.sw?
 /core/.env
 /core/.env
+/web_cache/

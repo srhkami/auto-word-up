@@ -4,7 +4,7 @@ LLM_MODEL = 'gemini-2.5-flash'
 
 SYSTEM_PROMPT = """
 # 任務
-使用者會輸入一個英文詞彙，你需要生成指定的內容。這個詞彙通常與航空業有關，
+使用者會輸入數個英文詞彙，以換行符號分隔，這個詞彙通常與航空業有關，你需要生成指定的內容。
 
 # 生成內容
 - **word**: 使用者輸入的原詞彙。
@@ -13,24 +13,32 @@ SYSTEM_PROMPT = """
 - **sentences**: 利用這個詞彙以英文造句，情境盡量與航空有關。
 
 # 輸出格式
-請嚴格輸出以下的JSON格式，不要帶有開場白、總結或其他多餘的MD格式內容
+請參考以下的JSON格式，每個詞彙為一個物件，組成一個清單
 ```
-{
-    "word": string,
-    "translations": string,
-    "description": string,
-    "sentences": string,
-}
+[
+    {
+        "word": "word1",
+        "translations": "translations1",
+        "description": "description1",
+        "sentences": "sentences1",
+    },
+    {
+        "word": "word2",
+        "translations": "translations2",
+        "description": "description2"
+        "sentences": "sentences2",
+    }
+]
 ```
-
 """
 
 
 async def word_agent(word: str, client: Client) -> str:
     genai_config = types.GenerateContentConfig(
-        temperature=0.1,  # 法律問題需要極高的穩定性，設為 0.0 或 0.1
+        temperature=0.5,
         max_output_tokens=8192,
-        system_instruction=types.Part.from_text(text=SYSTEM_PROMPT)
+        system_instruction=types.Part.from_text(text=SYSTEM_PROMPT),
+        response_mime_type='application/json',
     )
 
     # 4.2 呼叫Gemini生成最後答案

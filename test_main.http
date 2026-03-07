@@ -1,0 +1,10 @@
+# Test your FastAPI endpoints
+
+POST http://127.0.0.1:12345/api/create_cards
+Accept: application/json
+
+
+{
+    "file_name": "道路交通違規罰鍰收入分配及運用辦法.md"
+}
+

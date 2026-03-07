@@ -1,7 +1,6 @@
 import './App.css'
 import {Toaster} from "react-hot-toast";
-import {Nav} from "@/features";
-import {Intro, ModalNewVersion} from "@/features";
+import {Nav, Intro} from "@/features";
 
 function App() {
   return (
@@ -11,7 +10,7 @@ function App() {
         <Intro/>
       </div>
       {/*對話框*/}
-      <ModalNewVersion/>
+      {/*<ModalNewVersion/>*/}
       {/*快速彈窗*/}
       <Toaster
         position="top-center"
