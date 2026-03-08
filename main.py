@@ -68,10 +68,8 @@ async def login(data: Login) -> Profile:
 
 @app.post('/api/query_gemini')
 async def query_gemini(data: QueryGemini) -> list[WordResult]:
-    # words = data.word_content.split('/n')
     gemini_client = genai.Client(api_key=data.api_key)
-
-    json_text = await word_agent(data.word_content, gemini_client)
+    json_text = await word_agent(data.word_content, data.prompt, gemini_client)
     words = json.loads(json_text)
     results: list[WordResult] = []
     for i in words:
@@ -127,9 +125,7 @@ async def create_cards(data: CreateCards) -> CreateCardsResponse:
 
                 }
             )
-            log().info(f'【{card.word}】')
-            log().info('返回狀態：' + str(response.status_code))
-            log().info('返回內容：' + response.text)
+            log().info(f'【{card.word}】' + str(response.status_code))
             if response.status_code == 200:
                 success_words.append(card.word)
             else:

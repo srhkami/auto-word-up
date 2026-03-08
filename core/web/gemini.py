@@ -33,11 +33,11 @@ SYSTEM_PROMPT = """
 """
 
 
-async def word_agent(word: str, client: Client) -> str:
+async def word_agent(word: str, prompt: str, client: Client) -> str:
     genai_config = types.GenerateContentConfig(
         temperature=0.5,
         max_output_tokens=8192,
-        system_instruction=types.Part.from_text(text=SYSTEM_PROMPT),
+        system_instruction=types.Part.from_text(text=prompt),
         response_mime_type='application/json',
     )
 

@@ -1,31 +1,37 @@
-import {Dispatch, SetStateAction, useRef, useState} from "react";
+import {Dispatch, SetStateAction} from "react";
 import {Badge, Button} from "@/component";
 import toast from "react-hot-toast";
 import {Step} from "@/utils/type.ts";
+import {SubmitHandler, useForm} from "react-hook-form";
 
 type Props = {
   readonly setStep: Dispatch<SetStateAction<Step>>
 }
 
-export default function Step2ApiKey({setStep}:Props) {
+type FormValues = {
+  api_key: string,
+}
 
-  const [key, setKey] = useState<string>(localStorage.getItem('api-key') ?? '')
-  const inputRef = useRef<HTMLInputElement>(null);
+export default function Step2ApiKey({setStep}: Props) {
 
-  const onSave = () => {
-    if (inputRef.current) {
-      setKey(inputRef.current.value)
-      localStorage.setItem('api-key', inputRef.current.value)
-      toast.success('儲存成功')
-      setStep(3);
+  const {register, handleSubmit} = useForm<FormValues>({
+    defaultValues: {
+      api_key: localStorage.getItem('api-key') ?? '',
     }
+  });
+
+  const onSave: SubmitHandler<FormValues> = (formData) => {
+    localStorage.setItem('api-key', formData.api_key)
+    toast.success('儲存成功')
+    setStep(3);
   }
   return (
-    <div className='card-body'>
+    <form className='card-body' onSubmit={handleSubmit(onSave)}>
       <div className='card-title'><Badge color='info'>Step 2</Badge>連結 Gemini</div>
       <label htmlFor='key' className='label'>請輸入Gemini的API KEY</label>
-      <input name='key' defaultValue={key} ref={inputRef} className='input w-full' type='text'/>
-      <Button shape='block' color='success' className='mt-4' onClick={onSave}>儲存</Button>
-    </div>
+      <input className='input w-full' type='text'
+             {...register('api_key', {required: true})}/>
+      <Button shape='block' color='success' className='mt-4'>儲存</Button>
+    </form>
   )
 }

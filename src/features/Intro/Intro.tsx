@@ -7,7 +7,7 @@ import Step4Cards from "@/features/Intro/Step4Cards.tsx";
 
 export default function Intro() {
 
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(3);
   const [profile, setProfile] = useState<Profile>();
   const [words, setWords] = useState<Array<WordResult>>([]);
 

@@ -34,4 +34,5 @@ class CreateCardsResponse(BaseModel):
 
 class QueryGemini(BaseModel):
     api_key: str
+    prompt: str
     word_content: str
