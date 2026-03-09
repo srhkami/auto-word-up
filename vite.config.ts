@@ -14,6 +14,17 @@ export default defineConfig({
     watch: {
       usePolling: true,   // 開啟輪詢
       interval: 100,      // 每 100ms 檢查一次
+      ignored: [
+        '**/__pycache__/**',
+        '**/.venv/**',
+        '**/web_cache/**',
+        '**/*.pyc',
+        '**/*.pyo',
+        '**/db.sqlite3', // 如果你有資料庫
+        '**/logs/**',     // 如果你有日誌
+        '**/*.log',     // 甚至可以直接忽略你的 Python 入口文件
+        '**/main.py',     // 甚至可以直接忽略你的 Python 入口文件
+      ],
     },
     proxy: {
       // 將所有 /api 開頭的請求代理到 FastAPI

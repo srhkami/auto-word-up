@@ -14,7 +14,7 @@ from google import genai
 import httpx
 
 DEBUG_MODE = False
-APP_NAME = '預設程式'
+APP_NAME = 'WORD-UP'
 
 app = FastAPI()
 
@@ -61,8 +61,6 @@ if os.path.exists(DIST_PATH):
 # 無論用戶訪問什麼路徑，只要不是 API，都返回 index.html
 @app.get("/{catchall:path}")
 async def serve_react_app(catchall: str):
-    log().info(DIST_PATH)
-    log().info(CACHE_PATH)
     index_file = os.path.join(DIST_PATH, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
@@ -172,7 +170,6 @@ if __name__ == '__main__':
 
     if DEBUG_MODE:
         log().error('注意！！DEBUG模式已開啟！！')
-    log().info('請耐心等待程式開啟......')
     # api = Api()
     url = 'http://localhost:5173' if DEBUG_MODE else "http://127.0.0.1:12345"
     window = webview.create_window(
