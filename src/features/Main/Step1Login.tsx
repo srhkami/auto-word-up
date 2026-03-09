@@ -4,8 +4,8 @@ import axios from "axios";
 import {showToast} from "@/func";
 import {Dispatch, SetStateAction} from "react";
 import {MdNumbers} from "react-icons/md";
-import {AppVersionText} from "@/utils/log.ts";
-import {Profile, Step} from "@/utils/type.ts";
+import {AppVersionText} from "@/lib/log.ts";
+import {Profile, Step} from "@/lib/type.ts";
 
 type Props = {
   readonly setStep: Dispatch<SetStateAction<Step>>
@@ -23,12 +23,11 @@ export default function Step1Login({setStep, setProfile}: Props) {
   const {
     handleSubmit,
     register,
-    formState: {errors, isLoading}
+    formState: {errors, isSubmitting}
   } = useForm<FormValues>({defaultValues: {email: localStorage.getItem('email') ?? ''}});
 
-  const onSubmit: SubmitHandler<FormValues> = (formData) => {
-    localStorage.setItem('email', formData.email)
-    showToast(
+  const onSubmit: SubmitHandler<FormValues> = async (formData) => {
+    await showToast(
       async () => axios<Profile>({
         url: '/api/login',
         method: 'POST',
@@ -39,6 +38,7 @@ export default function Step1Login({setStep, setProfile}: Props) {
         setProfile(res.data);
         setStep(2);
       })
+      .finally(() => localStorage.setItem('email', formData.email))
   }
 
   return (
@@ -54,7 +54,7 @@ export default function Step1Login({setStep, setProfile}: Props) {
                  {...register('password', {required: '此為必填欄位'})}/>
         </FormInputCol>
         <Col xs={12} className='mt-6 px-1'>
-          <Button color='primary' shape='block' disabled={isLoading}>登入</Button>
+          <Button color='primary' shape='block' disabled={isSubmitting}>登入</Button>
         </Col>
       </Row>
       <div className='divider my-1 text-xs'>關於此軟體</div>

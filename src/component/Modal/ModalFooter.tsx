@@ -2,15 +2,15 @@ import type {ReactNode} from "react";
 import {twMerge} from "tailwind-merge";
 
 type Props = {
-  className?: string,
-  divider?: boolean, // 分隔線（預設為否）
-  children: ReactNode,
+  readonly className?: string,
+  readonly divider?: boolean, // 分隔線（預設為否）
+  readonly children: ReactNode,
 }
 
 export default function ModalFooter({className, divider = false, children}: Props) {
 
   const classes = twMerge(
-    'flex items-center justify-end',
+    'flex items-center justify-end gap-2',
     className,
   )
 

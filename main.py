@@ -13,13 +13,12 @@ from core.web.gemini import word_agent
 from google import genai
 import httpx
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 APP_NAME = '預設程式'
 
 app = FastAPI()
 
 
-# 1. 獲取 dist 文件夾的絕對路徑
 def get_resource_path(relative_path):
     """ 獲取資源絕對路徑，適應開發環境與 PyInstaller 打包環境 """
     if hasattr(sys, '_MEIPASS'):
@@ -27,9 +26,30 @@ def get_resource_path(relative_path):
     return os.path.join(os.path.abspath('.'), relative_path)
 
 
+def get_portable_path(folder_name):
+    """ 獲取程式執行檔 (.exe) 旁邊的路徑 """
+    if hasattr(sys, 'frozen'):
+        # 如果是打包後的環境，sys.executable 是 .exe 的完整路徑
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # 如果是開發環境，則使用目前腳本所在目錄
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    full_path = os.path.join(base_path, folder_name)
+
+    # 確保資料夾存在
+    if not os.path.exists(full_path):
+        try:
+            os.makedirs(full_path)
+        except PermissionError:
+            # 如果沒有權限（例如在 Program Files 下），這裡會報錯
+            print("權限不足，無法在程式旁建立資料夾！")
+
+    return full_path
+
+
 DIST_PATH = str(get_resource_path("dist"))
-# 瀏覽器緩存路徑 (如果你還是想讓 localStorage 生效)
-CACHE_PATH = str(get_resource_path("web_cache"))
+CACHE_PATH = str(get_portable_path("web_cache"))
 
 # 2. 掛載靜態資源 (CSS, JS, Images)
 # 注意：必須放在 API 路由之後，否則可能攔截 API 請求
@@ -41,6 +61,8 @@ if os.path.exists(DIST_PATH):
 # 無論用戶訪問什麼路徑，只要不是 API，都返回 index.html
 @app.get("/{catchall:path}")
 async def serve_react_app(catchall: str):
+    log().info(DIST_PATH)
+    log().info(CACHE_PATH)
     index_file = os.path.join(DIST_PATH, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
@@ -163,6 +185,6 @@ if __name__ == '__main__':
     log().debug('程式開啟成功')
     webview.start(
         debug=DEBUG_MODE,
-        storage_path=str(CACHE_PATH),
+        storage_path=CACHE_PATH,
         private_mode=False,
     )

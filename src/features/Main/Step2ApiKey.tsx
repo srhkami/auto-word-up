@@ -1,7 +1,7 @@
 import {Dispatch, SetStateAction} from "react";
 import {Badge, Button} from "@/component";
 import toast from "react-hot-toast";
-import {Step} from "@/utils/type.ts";
+import {Step} from "@/lib/type.ts";
 import {SubmitHandler, useForm} from "react-hook-form";
 
 type Props = {

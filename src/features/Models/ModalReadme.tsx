@@ -4,7 +4,7 @@ import readmePath from '../../../README.md?raw';
 import {useModal} from "@/hooks";
 import 'github-markdown-css/github-markdown.css';
 import {useEffect} from "react";
-import {AppVersion} from "@/utils/log.ts";
+import {AppVersion} from "@/lib/log.ts";
 
 export default function ModalReadme() {
 

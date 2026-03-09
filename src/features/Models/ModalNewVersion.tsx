@@ -1,10 +1,10 @@
 import {MdNumbers} from "react-icons/md"
 import {HiOutlineClipboardList} from "react-icons/hi";
-import {VersionCheckData} from "@/utils/type.ts";
+import {VersionCheckData} from "@/lib/type.ts";
 import {Modal, ModalBody} from "@/component";
 import {useEffect, useState} from "react";
 import axios from "axios";
-import {AppVersion} from "@/utils/log.ts";
+import {AppVersion} from "@/lib/log.ts";
 import {useModal} from "@/hooks";
 
 /* 檢查新版本 */

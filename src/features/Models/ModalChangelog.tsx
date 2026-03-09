@@ -1,6 +1,6 @@
 import {LuNotebookTabs} from "react-icons/lu";
 import {Modal, ModalBody, ModalHeader} from "@/component";
-import {CHANGELOG_LIST} from "@/utils/log.ts";
+import {CHANGELOG_LIST} from "@/lib/log.ts";
 import ChangelogCollapse from "@/features/About/ChangelogCollapse.tsx";
 import {useModal} from "@/hooks";
 

@@ -1,5 +1,5 @@
 import {Badge, Collapse, CollapseContent, CollapseTitle} from "@/component";
-import {TVersionObject} from "@/utils/type.ts";
+import {TVersionObject} from "@/lib/type.ts";
 import clsx from "clsx";
 
 type Props = {

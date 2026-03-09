@@ -1,13 +1,13 @@
 import './App.css'
 import {Toaster} from "react-hot-toast";
-import {Nav, Intro} from "@/features";
+import {Nav, Main} from "@/features";
 
 function App() {
   return (
     <div>
       <Nav/>
       <div className='min-h-[84vh]'>
-        <Intro/>
+        <Main/>
       </div>
       {/*對話框*/}
       {/*<ModalNewVersion/>*/}

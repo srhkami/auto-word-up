@@ -1,13 +1,13 @@
-import Step1Login from "@/features/Intro/Step1Login.tsx";
-import Step2ApiKey from "@/features/Intro/Step2ApiKey.tsx";
-import Step3Query from "@/features/Intro/Step3Query.tsx";
+import Step1Login from "@/features/Main/Step1Login.tsx";
+import Step2ApiKey from "@/features/Main/Step2ApiKey.tsx";
+import Step3Query from "@/features/Main/Step3Query.tsx";
 import {useState} from "react";
-import {Profile, Step, WordResult} from "@/utils/type.ts";
-import Step4Cards from "@/features/Intro/Step4Cards.tsx";
+import {Profile, Step, WordResult} from "@/lib/type.ts";
+import Step4Cards from "@/features/Main/Step4Cards.tsx";
 
-export default function Intro() {
+export default function Main() {
 
-  const [step, setStep] = useState<Step>(3);
+  const [step, setStep] = useState<Step>(1);
   const [profile, setProfile] = useState<Profile>();
   const [words, setWords] = useState<Array<WordResult>>([]);
 
